@@ -1,0 +1,16 @@
+{
+  "name": "ヤーズフレックス管理",
+  "short_name": "ヤーズ記録",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#fbdcf2",
+  "theme_color": "#fbdcf2",
+  "icons": [
+    {
+      "src": "./yazicon.png",
+      "sizes": "any",
+      "type": "image/png"
+    }
+  ]
+}
