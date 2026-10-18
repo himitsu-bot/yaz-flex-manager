@@ -1,0 +1,568 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>ヤーズフレックス管理帳</title>
+  <style>
+    :root {
+      --pink: #d96b91;
+      --pink-light: #fff0f5;
+      --ink: #40343a;
+      --muted: #81747b;
+      --line: #f0dfe6;
+      --bg: #fff9fb;
+      --white: #ffffff;
+      --green: #477d68;
+      --blue: #617eb0;
+      --amber: #9b7434;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: system-ui, -apple-system, "Yu Gothic", Meiryo, sans-serif;
+      color: var(--ink);
+      background: var(--bg);
+      line-height: 1.55;
+    }
+    header {
+      background: linear-gradient(135deg, #f9dbe6, #fff0f5);
+      padding: 26px 18px 22px;
+      border-bottom: 1px solid var(--line);
+    }
+    .wrap { width: min(960px, 100% - 28px); margin: 0 auto; }
+    .eyebrow { color: #9b5470; font-size: .82rem; font-weight: 700; letter-spacing: .06em; }
+    h1 { font-size: clamp(1.55rem, 5vw, 2.2rem); margin: 5px 0 4px; }
+    header p { margin: 0; color: #715864; }
+    main { padding: 20px 0 36px; }
+    .panel {
+      background: var(--white);
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      padding: 18px;
+      margin-bottom: 16px;
+      box-shadow: 0 4px 16px #8c52600a;
+    }
+    .panel h2 { font-size: 1.1rem; margin: 0 0 12px; }
+    .today-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+    .stat { background: #fff7fa; border-radius: 13px; padding: 13px; min-width: 0; }
+    .stat-label { font-size: .82rem; color: var(--muted); }
+    .stat-value { font-size: 1.13rem; font-weight: 750; margin-top: 4px; overflow-wrap: anywhere; }
+    .actions { display: flex; flex-wrap: wrap; gap: 9px; margin-top: 14px; }
+    button, input, textarea { font: inherit; }
+    button {
+      border: 1px solid var(--line);
+      border-radius: 11px;
+      padding: 10px 13px;
+      background: white;
+      color: var(--ink);
+      cursor: pointer;
+      transition: transform .05s, background .15s;
+    }
+    button:active { transform: scale(.98); }
+    button.primary { background: var(--pink); color: white; border-color: var(--pink); }
+    button.selected { background: var(--pink-light); border-color: var(--pink); color: #9f3f66; font-weight: 700; }
+    button.small { padding: 6px 9px; font-size: .9rem; }
+    .hint { color: var(--muted); font-size: .87rem; margin: 9px 0 0; }
+    .calendar-head { display: flex; justify-content: space-between; align-items: center; gap: 8px; margin-bottom: 12px; }
+    .month-label { font-size: 1.12rem; font-weight: 750; }
+    .weekdays, .calendar { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 5px; }
+    .weekday { text-align: center; color: var(--muted); font-size: .78rem; padding: 4px 0; }
+    .weekday:first-child { color: #c75b6f; }
+    .weekday:last-child { color: #5d7eb2; }
+    .day {
+      min-height: 72px;
+      border-radius: 11px;
+      padding: 6px 4px;
+      background: #fff;
+      border: 1px solid #f2e8ec;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 3px;
+      cursor: pointer;
+      min-width: 0;
+    }
+    .day.empty { background: transparent; border-color: transparent; cursor: default; }
+    .day.today { outline: 2px solid #e7a0b8; outline-offset: -2px; }
+    .day.active { background: #fff0f5; border-color: var(--pink); }
+    .day-number { font-size: .85rem; font-weight: 650; align-self: flex-start; padding-left: 3px; }
+    .markers { display: flex; flex-wrap: wrap; justify-content: center; gap: 1px; font-size: .85rem; line-height: 1.2; }
+    .day-note { color: var(--muted); font-size: .65rem; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .legend { display: flex; flex-wrap: wrap; gap: 8px 13px; font-size: .82rem; color: var(--muted); margin-top: 12px; }
+    .record-title { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+    .record-title h2 { margin-bottom: 0; }
+    .record-date { color: var(--muted); font-size: .88rem; margin: 5px 0 13px; }
+    .toggle-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 11px 0; border-bottom: 1px solid #f5ebef; }
+    .toggle-row:last-of-type { border-bottom: 0; }
+    .toggle-label { font-weight: 650; }
+    .toggle-sub { font-size: .82rem; color: var(--muted); }
+    .toggle-group { display: flex; gap: 5px; flex-shrink: 0; }
+    .toggle-group button { padding: 7px 10px; min-width: 55px; }
+    .star-row { margin-top: 12px; }
+    .field { display: grid; gap: 5px; margin: 12px 0; }
+    .field label { font-size: .9rem; font-weight: 650; }
+    input[type="text"], textarea {
+      width: 100%; border: 1px solid var(--line); border-radius: 10px; padding: 10px;
+      background: white; color: var(--ink);
+    }
+    textarea { min-height: 72px; resize: vertical; }
+    .notice { background: #fff8e9; border: 1px solid #f1e0b8; color: #715b34; border-radius: 12px; padding: 12px; font-size: .86rem; }
+    footer { text-align: center; color: var(--muted); font-size: .78rem; padding: 0 16px 24px; }
+    @media (max-width: 560px) {
+      .today-grid { grid-template-columns: 1fr; }
+      .stat { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
+      .stat-value { margin-top: 0; text-align: right; }
+      .panel { padding: 14px; }
+      .day { min-height: 59px; padding: 5px 2px; }
+      .markers { font-size: .75rem; }
+      .day-note { display: none; }
+      .toggle-row { align-items: flex-start; flex-direction: column; }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="wrap">
+      <div class="eyebrow">MY HEALTH NOTE</div>
+      <h1>ヤーズフレックス管理帳</h1>
+      <p>服薬・出血・休薬を、自分のペースで記録。</p>
+    </div>
+  </header>
+
+  <main class="wrap">
+    <section class="panel">
+      <h2>今日の状況</h2>
+      <div class="today-grid">
+        <div class="stat"><div class="stat-label">今日</div><div class="stat-value" id="todayDate">—</div></div>
+        <div class="stat"><div class="stat-label">連続服用日数</div><div class="stat-value" id="doseCount">未設定</div></div>
+        <div class="stat"><div class="stat-label">今日の記録</div><div class="stat-value" id="todayStatus">未記録</div></div>
+      </div>
+      <p class="hint">服薬日数は、実際の記録をもとに表示します。最初の服用日を設定すると計算を始められます。</p>
+    </section>
+
+    <section class="panel">
+      <div class="calendar-head">
+        <button class="small" id="prevMonth" aria-label="前の月">‹ 前月</button>
+        <div class="month-label" id="monthLabel">年月</div>
+        <button class="small" id="nextMonth" aria-label="次の月">翌月 ›</button>
+      </div>
+      <div class="weekdays">
+        <div class="weekday">日</div><div class="weekday">月</div><div class="weekday">火</div>
+        <div class="weekday">水</div><div class="weekday">木</div><div class="weekday">金</div><div class="weekday">土</div>
+      </div>
+      <div class="calendar" id="calendar"></div>
+      <div class="legend">
+        <span>💊 服用した</span><span>🩸 出血あり</span><span>⏸ 休薬</span><span>★ 目印</span>
+      </div>
+      <p class="hint">日付をタップすると、その日の記録を確認・修正できます。</p>
+    </section>
+
+    <section class="panel" id="recordPanel">
+      <div class="record-title">
+        <h2>日付ごとの記録</h2>
+        <button class="small" id="goToday">今日に戻る</button>
+      </div>
+      <div class="record-date" id="selectedDateLabel">—</div>
+      <div class="toggle-row">
+        <div><div class="toggle-label">💊 薬を飲んだ</div><div class="toggle-sub">実際に服用した日だけ選択</div></div>
+        <div class="toggle-group" id="doseButtons">
+          <button data-value="taken">はい</button><button data-value="notTaken">いいえ</button><button data-value="unknown">不明</button>
+        </div>
+      </div>
+      <div class="toggle-row">
+        <div><div class="toggle-label">🩸 出血があった</div><div class="toggle-sub">出血した日を記録</div></div>
+        <div class="toggle-group" id="bleedingButtons">
+          <button data-value="yes">あり</button><button data-value="no">なし</button>
+        </div>
+      </div>
+      <div class="toggle-row">
+        <div><div class="toggle-label">⏸ 実際に休薬した</div><div class="toggle-sub">予定ではなく、実際の休薬日を記録</div></div>
+        <div class="toggle-group" id="breakButtons">
+          <button data-value="yes">はい</button><button data-value="no">いいえ</button>
+        </div>
+      </div>
+      <div class="star-row">
+        <button id="starButton">☆ ★マークを付ける</button>
+      </div>
+      <div class="field">
+        <label for="note">この日のメモ（任意）</label>
+        <textarea id="note" placeholder="例：健診、受診、気になったことなど"></textarea>
+      </div>
+      <div class="actions">
+        <button class="primary" id="saveRecord">この日の記録を保存</button>
+        <button id="clearRecord">この日の記録を消去</button>
+      </div>
+      <p class="hint" id="saveMessage" role="status">記録はこのブラウザ内に保存されます。</p>
+    </section>
+
+    <section class="panel">
+      <h2>最初の服用日（連続服用日数の計算用）</h2>
+      <div class="field">
+        <label for="startDate">今回の連続服用を始めた日</label>
+        <input type="date" id="startDate">
+      </div>
+      <div class="actions"><button class="primary" id="saveStartDate">開始日を保存</button></div>
+      <p class="hint">実際に服用を始めた日を設定してください。休薬後に服用を再開した場合は、その再開日を新しい開始日として設定します。この初期版では休薬を自動判定しません。</p>
+    </section>
+
+    <section class="panel">
+      <h2>残薬管理</h2>
+      <div class="today-grid">
+        <div class="stat"><div class="stat-label">手元の残薬</div><div class="stat-value" id="stockCount">未設定</div></div>
+        <div class="stat"><div class="stat-label">残薬がなくなる予測日</div><div class="stat-value" id="stockEndDate">未計算</div></div>
+        <div class="stat"><div class="stat-label">受診目安日（14日前）</div><div class="stat-value" id="visitDate">未計算</div></div>
+      </div>
+      <div class="field"><label for="stockInput">現在の残薬（錠）</label><input type="number" min="0" step="1" id="stockInput" placeholder="例：42"></div>
+      <div class="field"><label for="stockAsOf">この残薬数を数えた日</label><input type="date" id="stockAsOf"></div>
+      <div class="actions"><button class="primary" id="saveStock">実際の残薬数を保存</button><button id="addPack">処方薬を追加（3シート＝84錠）</button></div>
+      <p class="hint">手元で数えた錠数を基準に管理します。基準日以降の服用済み記録だけを差し引きます。残薬がなくなる日は、今後1日1錠を服用すると仮定した目安です。</p>
+      <p class="hint" id="stockMessage" role="status">残薬を数えた日と錠数を登録してください。</p>
+    </section>
+    <section class="panel">
+      <h2>データのバックアップ・復元</h2>
+      <p class="hint">記録をJSONファイルとして保存できます。復元すると、現在のブラウザ内の記録がバックアップ内容に置き換わります。</p>
+      <div class="actions"><button class="primary" id="exportData">バックアップを書き出す</button><button id="importButton">バックアップを復元</button><input type="file" id="importFile" accept=".json,application/json" hidden></div>
+      <p class="hint" id="backupMessage" role="status"></p>
+    </section>
+    <section class="notice">
+      <strong>大切なお知らせ：</strong>このページは記録補助用です。服薬・休薬の判断や受診時期を決めるものではありません。医師・薬剤師からの指示と処方時の説明を優先してください。ブラウザのデータを消去すると記録が失われる場合があります。バックアップファイルも安全な場所に保管してください。
+    </section>
+  </main>
+  <footer>ヤーズフレックス管理帳・試作版</footer>
+
+  <script>
+    const STORAGE_KEY = "yazFlexManager_v1";
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    function dateKey(date) {
+      return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
+    }
+    function parseDate(key) {
+      const [y, m, d] = key.split("-").map(Number);
+      return new Date(y, m - 1, d);
+    }
+    function formatDate(date) {
+      return `${date.getFullYear()}年${date.getMonth() + 1}月${date.getDate()}日`;
+    }
+    function emptyData() {
+      return { records: {}, startDate: "", stock: null, stockAsOf: "", stockEvents: [] };
+    }
+    function loadData() {
+      try {
+        const saved = localStorage.getItem(STORAGE_KEY);
+        if (!saved) return emptyData();
+        const parsed = JSON.parse(saved);
+        if (!parsed || typeof parsed !== "object" || !parsed.records) return emptyData();
+        return {
+          records: parsed.records, startDate: parsed.startDate || "",
+          stock: Number.isInteger(parsed.stock) && parsed.stock >= 0 ? parsed.stock : null,
+          stockAsOf: parsed.stockAsOf || "",
+          stockEvents: Array.isArray(parsed.stockEvents) ? parsed.stockEvents : []
+        };
+      } catch (error) {
+        return emptyData();
+      }
+    }
+    let data = loadData();
+    let selectedKey = dateKey(today);
+    let visibleMonth = new Date(today.getFullYear(), today.getMonth(), 1);
+    let draft = blankRecord();
+
+    function blankRecord() {
+      return { dose: "", bleeding: "", breakDay: false, star: false, note: "" };
+    }
+    function getRecord(key) {
+      const record = data.records[key];
+      return record ? { ...blankRecord(), ...record } : blankRecord();
+    }
+    function saveAll() {
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+        return true;
+      } catch (error) {
+        document.getElementById("saveMessage").textContent = "保存できませんでした。ブラウザの設定や空き容量をご確認ください。";
+        return false;
+      }
+    }
+    function recordIsEmpty(record) {
+      return !record.dose && !record.bleeding && !record.breakDay && !record.star && !record.note.trim();
+    }
+    function setDraftFromSelected() {
+      draft = getRecord(selectedKey);
+      renderRecordForm();
+    }
+    function setButtonGroup(groupId, value) {
+      document.querySelectorAll(`#${groupId} button`).forEach(button => {
+        const active = button.dataset.value === value;
+        button.classList.toggle("selected", active);
+        button.setAttribute("aria-pressed", active ? "true" : "false");
+      });
+    }
+    function renderRecordForm() {
+      document.getElementById("selectedDateLabel").textContent = formatDate(parseDate(selectedKey));
+      setButtonGroup("doseButtons", draft.dose);
+      setButtonGroup("bleedingButtons", draft.bleeding);
+      setButtonGroup("breakButtons", draft.breakDay ? "yes" : "no");
+      document.getElementById("starButton").textContent = draft.star ? "★ ★マークを外す" : "☆ ★マークを付ける";
+      document.getElementById("starButton").classList.toggle("selected", draft.star);
+      document.getElementById("note").value = draft.note;
+      document.getElementById("saveMessage").textContent = "記録はこのブラウザ内に保存されます。";
+    }
+    function currentStock() {
+      if (!Number.isInteger(data.stock) || data.stock < 0 || !data.stockAsOf) return null;
+      let amount = data.stock;
+      Object.keys(data.records).sort().forEach(key => {
+        if (key > data.stockAsOf && key <= dateKey(today) && data.records[key].dose === "taken") amount--;
+      });
+      (data.stockEvents || []).forEach(event => {
+        if (event.date > data.stockAsOf && event.date <= dateKey(today)) amount += event.amount;
+      });
+      return Math.max(0, amount);
+    }
+    function renderStock() {
+      const amount = currentStock();
+      document.getElementById("stockCount").textContent = amount === null ? "未設定" : `${amount}錠`;
+      document.getElementById("stockInput").value = data.stock === null ? "" : data.stock;
+      document.getElementById("stockAsOf").value = data.stockAsOf || "";
+      const end = amount === null ? null : new Date(today);
+      if (end && amount > 0) {
+        let remaining = amount;
+        for (let i = 1; i <= 500; i++) {
+          const d = new Date(today);
+          d.setDate(d.getDate() + i);
+          const r = getRecord(dateKey(d));
+          if (r.breakDay || r.dose === "notTaken") continue;
+          remaining--;
+          if (remaining <= 0) { end.setTime(d.getTime()); break; }
+        }
+      }
+      const visit = end ? new Date(end) : null;
+      if (visit) visit.setDate(visit.getDate() - 14);
+      document.getElementById("stockEndDate").textContent = end ? formatDate(end) : "未計算";
+      document.getElementById("visitDate").textContent = visit ? formatDate(visit) : "未計算";
+    }
+    function renderSummary() {
+      document.getElementById("todayDate").textContent = formatDate(today);
+      const todayRecord = getRecord(dateKey(today));
+      const statuses = [];
+      if (todayRecord.dose === "taken") statuses.push("💊服用済");
+      else if (todayRecord.dose === "notTaken") statuses.push("未服用");
+      else if (todayRecord.dose === "unknown") statuses.push("服用不明");
+      if (todayRecord.bleeding === "yes") statuses.push("🩸出血あり");
+      if (todayRecord.breakDay) statuses.push("⏸休薬");
+      if (todayRecord.star) statuses.push("★");
+      document.getElementById("todayStatus").textContent = statuses.length ? statuses.join(" / ") : "未記録";
+
+      if (!data.startDate) {
+        document.getElementById("doseCount").textContent = "未設定";
+      } else {
+        const start = parseDate(data.startDate);
+        const diff = Math.floor((today - start) / 86400000);
+        const startRecord = getRecord(data.startDate);
+        if (diff < 0) {
+          document.getElementById("doseCount").textContent = "開始日前";
+        } else if (startRecord.breakDay) {
+          document.getElementById("doseCount").textContent = "開始日を確認";
+        } else {
+          // Initial version shows calendar days since the user-entered start date.
+          // Breaks are not inferred; user should update start date after an actual restart.
+          document.getElementById("doseCount").textContent = `${diff + 1}日目`;
+        }
+      }
+      document.getElementById("startDate").value = data.startDate;
+    }
+    function renderCalendar() {
+      const year = visibleMonth.getFullYear();
+      const month = visibleMonth.getMonth();
+      document.getElementById("monthLabel").textContent = `${year}年${month + 1}月`;
+      const calendar = document.getElementById("calendar");
+      calendar.innerHTML = "";
+      const firstDay = new Date(year, month, 1).getDay();
+      const daysInMonth = new Date(year, month + 1, 0).getDate();
+
+      for (let i = 0; i < firstDay; i++) {
+        const empty = document.createElement("div");
+        empty.className = "day empty";
+        empty.setAttribute("aria-hidden", "true");
+        calendar.appendChild(empty);
+      }
+      for (let day = 1; day <= daysInMonth; day++) {
+        const date = new Date(year, month, day);
+        const key = dateKey(date);
+        const record = getRecord(key);
+        const cell = document.createElement("button");
+        cell.type = "button";
+        cell.className = "day";
+        if (key === dateKey(today)) cell.classList.add("today");
+        if (key === selectedKey) cell.classList.add("active");
+        cell.setAttribute("aria-label", `${formatDate(date)}の記録を開く`);
+        const number = document.createElement("span");
+        number.className = "day-number";
+        number.textContent = day;
+        const markers = document.createElement("span");
+        markers.className = "markers";
+        const symbols = [];
+        if (record.dose === "taken") symbols.push("💊");
+        if (record.bleeding === "yes") symbols.push("🩸");
+        if (record.breakDay) symbols.push("⏸");
+        if (record.star) symbols.push("★");
+        markers.textContent = symbols.join("");
+        const note = document.createElement("span");
+        note.className = "day-note";
+        note.textContent = record.note || "";
+        cell.append(number, markers, note);
+        cell.addEventListener("click", () => {
+          selectedKey = key;
+          setDraftFromSelected();
+          renderCalendar();
+          document.getElementById("recordPanel").scrollIntoView({ behavior: "smooth", block: "start" });
+        });
+        calendar.appendChild(cell);
+      }
+    }
+    function renderAll() {
+      renderSummary();
+      renderCalendar();
+      renderRecordForm();
+      renderStock();
+    }
+
+    document.querySelectorAll("#doseButtons button").forEach(button => {
+      button.addEventListener("click", () => {
+        draft.dose = button.dataset.value;
+        setButtonGroup("doseButtons", draft.dose);
+      });
+    });
+    document.querySelectorAll("#bleedingButtons button").forEach(button => {
+      button.addEventListener("click", () => {
+        draft.bleeding = button.dataset.value;
+        setButtonGroup("bleedingButtons", draft.bleeding);
+      });
+    });
+    document.querySelectorAll("#breakButtons button").forEach(button => {
+      button.addEventListener("click", () => {
+        draft.breakDay = button.dataset.value === "yes";
+        setButtonGroup("breakButtons", draft.breakDay ? "yes" : "no");
+      });
+    });
+    document.getElementById("starButton").addEventListener("click", () => {
+      draft.star = !draft.star;
+      renderRecordForm();
+    });
+    document.getElementById("note").addEventListener("input", event => {
+      draft.note = event.target.value;
+    });
+    document.getElementById("saveRecord").addEventListener("click", () => {
+      draft.note = document.getElementById("note").value;
+      if (recordIsEmpty(draft)) delete data.records[selectedKey];
+      else data.records[selectedKey] = { ...draft };
+      if (saveAll()) {
+        document.getElementById("saveMessage").textContent = "保存しました！";
+        renderAll();
+      }
+    });
+    document.getElementById("clearRecord").addEventListener("click", () => {
+      if (!confirm(`${formatDate(parseDate(selectedKey))}の記録をすべて消去しますか？`)) return;
+      delete data.records[selectedKey];
+      saveAll();
+      draft = blankRecord();
+      renderAll();
+      document.getElementById("saveMessage").textContent = "この日の記録を消去しました。";
+    });
+    document.getElementById("prevMonth").addEventListener("click", () => {
+      visibleMonth = new Date(visibleMonth.getFullYear(), visibleMonth.getMonth() - 1, 1);
+      renderCalendar();
+    });
+    document.getElementById("nextMonth").addEventListener("click", () => {
+      visibleMonth = new Date(visibleMonth.getFullYear(), visibleMonth.getMonth() + 1, 1);
+      renderCalendar();
+    });
+    document.getElementById("goToday").addEventListener("click", () => {
+      selectedKey = dateKey(today);
+      visibleMonth = new Date(today.getFullYear(), today.getMonth(), 1);
+      setDraftFromSelected();
+      renderCalendar();
+      document.getElementById("recordPanel").scrollIntoView({ behavior: "smooth", block: "start" });
+    });
+    document.getElementById("saveStartDate").addEventListener("click", () => {
+      data.startDate = document.getElementById("startDate").value;
+      if (saveAll()) {
+        renderSummary();
+        document.getElementById("saveMessage").textContent = "開始日を保存しました。";
+      }
+    });
+
+    document.getElementById("saveStock").addEventListener("click", () => {
+      const raw = document.getElementById("stockInput").value;
+      if (raw === "" || !Number.isInteger(Number(raw)) || Number(raw) < 0) {
+        document.getElementById("stockMessage").textContent = "0以上の整数で残薬数を入力してください。";
+        return;
+      }
+      data.stock = Number(raw);
+      data.stockAsOf = document.getElementById("stockAsOf").value || dateKey(today);
+      if (saveAll()) {
+        renderStock();
+        document.getElementById("stockMessage").textContent = `残薬 ${data.stock}錠を${formatDate(parseDate(data.stockAsOf))}時点の実数として保存しました。`;
+      }
+    });
+    document.getElementById("addPack").addEventListener("click", () => {
+      if (data.stock === null || !data.stockAsOf) {
+        document.getElementById("stockMessage").textContent = "先に残薬数と、数えた日を保存してください。";
+        return;
+      }
+      const date = prompt("処方薬を受け取った日を入力してください（YYYY-MM-DD）", dateKey(today));
+      if (!date || !/^\\d{4}-\\d{2}-\\d{2}$/.test(date)) return;
+      const d = parseDate(date);
+      if (Number.isNaN(d.getTime()) || dateKey(d) !== date) {
+        document.getElementById("stockMessage").textContent = "日付は YYYY-MM-DD 形式で入力してください。";
+        return;
+      }
+      data.stockEvents = data.stockEvents || [];
+      data.stockEvents.push({ date, amount: 84 });
+      if (saveAll()) {
+        renderStock();
+        document.getElementById("stockMessage").textContent = `${formatDate(d)}に84錠を追加する記録を保存しました。`;
+      }
+    });
+    document.getElementById("exportData").addEventListener("click", () => {
+      const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `yaz-flex-backup-${dateKey(today)}.json`;
+      a.click();
+      URL.revokeObjectURL(url);
+      document.getElementById("backupMessage").textContent = "バックアップを書き出しました。安全な場所に保管してください。";
+    });
+    document.getElementById("importButton").addEventListener("click", () => document.getElementById("importFile").click());
+    document.getElementById("importFile").addEventListener("change", async event => {
+      const file = event.target.files && event.target.files[0];
+      if (!file) return;
+      try {
+        const imported = JSON.parse(await file.text());
+        if (!imported || typeof imported !== "object" || !imported.records || typeof imported.records !== "object") throw new Error("invalid");
+        if (!confirm("現在のブラウザ内の記録を、バックアップの内容に置き換えます。続けますか？")) return;
+        data = {
+          records: imported.records, startDate: imported.startDate || "",
+          stock: Number.isInteger(imported.stock) && imported.stock >= 0 ? imported.stock : null,
+          stockAsOf: imported.stockAsOf || "",
+          stockEvents: Array.isArray(imported.stockEvents) ? imported.stockEvents : []
+        };
+        if (saveAll()) {
+          selectedKey = dateKey(today);
+          visibleMonth = new Date(today.getFullYear(), today.getMonth(), 1);
+          setDraftFromSelected();
+          renderAll();
+          document.getElementById("backupMessage").textContent = "バックアップを復元しました。";
+        }
+      } catch (error) {
+        document.getElementById("backupMessage").textContent = "復元できませんでした。正しいバックアップファイルか確認してください。";
+      } finally { event.target.value = ""; }
+    });
+
+    renderAll();
+  </script>
+</body>
+</html>
