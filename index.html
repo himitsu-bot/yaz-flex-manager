@@ -144,23 +144,6 @@
       <p class="hint">服薬日数は、実際の記録をもとに表示します。最初の服用日を設定すると計算を始められます。</p>
     </section>
 
-    <section class="panel">
-      <div class="calendar-head">
-        <button class="small" id="prevMonth" aria-label="前の月">‹ 前月</button>
-        <div class="month-label" id="monthLabel">年月</div>
-        <button class="small" id="nextMonth" aria-label="次の月">翌月 ›</button>
-      </div>
-      <div class="weekdays">
-        <div class="weekday">日</div><div class="weekday">月</div><div class="weekday">火</div>
-        <div class="weekday">水</div><div class="weekday">木</div><div class="weekday">金</div><div class="weekday">土</div>
-      </div>
-      <div class="calendar" id="calendar"></div>
-      <div class="legend">
-        <span>💊 服用した</span><span>🩸 出血あり</span><span>⏸ 休薬</span><span>★ 目印</span>
-      </div>
-      <p class="hint">日付をタップすると、その日の記録を確認・修正できます。</p>
-    </section>
-
     <section class="panel" id="recordPanel">
       <div class="record-title">
         <h2>日付ごとの記録</h2>
@@ -197,6 +180,23 @@
         <button id="clearRecord">この日の記録を消去</button>
       </div>
       <p class="hint" id="saveMessage" role="status">記録はこのブラウザ内に保存されます。</p>
+    </section>
+    
+    <section class="panel">
+      <div class="calendar-head">
+        <button class="small" id="prevMonth" aria-label="前の月">‹ 前月</button>
+        <div class="month-label" id="monthLabel">年月</div>
+        <button class="small" id="nextMonth" aria-label="次の月">翌月 ›</button>
+      </div>
+      <div class="weekdays">
+        <div class="weekday">日</div><div class="weekday">月</div><div class="weekday">火</div>
+        <div class="weekday">水</div><div class="weekday">木</div><div class="weekday">金</div><div class="weekday">土</div>
+      </div>
+      <div class="calendar" id="calendar"></div>
+      <div class="legend">
+        <span>💊 服用した</span><span>🩸 出血あり</span><span>⏸ 休薬</span><span>★ 目印</span>
+      </div>
+      <p class="hint">日付をタップすると、その日の記録を確認・修正できます。</p>
     </section>
 
     <section class="panel">
